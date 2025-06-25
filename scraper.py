@@ -38,7 +38,7 @@ def fetch_and_parse_result(base_url, registration_no, retries=1, backoff_factor=
 
 def fetch_all_results(base_url, start_reg, end_reg):
     results = []
-    with ThreadPoolExecutor(max_workers=10) as executor:
+    with ThreadPoolExecutor(max_workers=5) as executor:
         futures = [executor.submit(fetch_and_parse_result, base_url, reg_no) for reg_no in
                    range(start_reg, end_reg + 1)]
         for future in futures:
