@@ -114,7 +114,7 @@ with col2:
 with st.form("result_form"):
     semester = st.selectbox("Semester", options=list(range(1, 9)), format_func=lambda x: f"{x} ({sem_words[x]})")
     batch = st.number_input("Batch Year (Last two digits, e.g. 23 for 2023-27)", min_value=20, max_value=30, value=23)
-    year = st.number_input("Exam Year (e.g. 2024)", min_value=2020, max_value=2030, value=2024)
+    # year = st.number_input("Exam Year (e.g. 2024)", min_value=2020, max_value=2030, value=2024)
     branch = st.selectbox("Branch", options=list(branch_codes.keys()), format_func=lambda x: branch_codes[x])
     college = st.selectbox("College", options=list(college_codes.keys()), format_func=lambda x: college_codes[x])
     start_reg = st.number_input("Start Registration No. (Short Reg No.)", min_value=1, max_value=999, value=1)
@@ -142,16 +142,40 @@ if submitted:
         start_reg += 900
         end_reg += 900
 
-    results = []
     st.info("Fetching results... This might take some time depending on the range.")
+    year = int(2000 + batch + (0.5 * semester))
 
     start_full_reg_no = f"{reg_batch}{branch}{college}{start_reg:03d}"
     end_full_reg_no = f"{reg_batch}{branch}{college}{end_reg:03d}"
-    url = f"https://results.beup.ac.in/ResultsBTech{sem_words[semester]}Sem{year}_B20{batch}Pub.aspx?Sem={sem_romans[semester]}&RegNo="
-    results = fetch_all_results(url, int(start_full_reg_no), int(end_full_reg_no))
+
+    # ---- START: NEW OPTIMIZED LOGIC ----
+
+    # Define the two possible URL formats
+    url_primary = f"https://results.beup.ac.in/ResultsBTech{sem_words[semester]}Sem{year}_B20{batch}Pub.aspx?Sem={sem_romans[semester]}&RegNo="
+    url_secondary = f"https://results.beup.ac.in/ResultsBTech{sem_words[semester]}Sem{year}Pub.aspx?Sem={sem_romans[semester]}&RegNo="
+
+    # Define a small test range (up to 5 students)
+    test_end_no = min(int(start_full_reg_no) + 4, int(end_full_reg_no))
+
+    # 1. Test the primary URL with the small range first
+    # st.info(f"Testing primary URL with registration numbers {start_full_reg_no} to {test_end_no}...")
+    test_results = fetch_all_results(url_primary, int(start_full_reg_no), test_end_no)
+
+    # 2. Based on the test, decide which URL to use for the full scrape
+    if test_results:
+        # st.success("Primary URL test successful! Fetching all results with this format.")
+        # If the test passes, use the primary URL for the full range.
+        results = fetch_all_results(url_primary, int(start_full_reg_no), int(end_full_reg_no))
+    else:
+        # st.warning("Primary URL test failed. Switching to secondary URL for all results.")
+        # If the test fails, use the secondary URL for the full range directly.
+        results = fetch_all_results(url_secondary, int(start_full_reg_no), int(end_full_reg_no))
+        
+    # ---- END: NEW OPTIMIZED LOGIC ----
+
 
     if not results:
-        st.warning("No results fetched. Please check inputs.")
+        st.error("Data Not Found. Both primary and secondary URL formats failed to fetch results. Please verify your inputs and the current URL structure on the university website.")
         st.stop()
 
     df = pd.DataFrame(results)
@@ -204,4 +228,5 @@ if submitted:
         export_to_pdf(df, export_path)
         with open(export_path, "rb") as f:
             st.download_button(label="Download PDF", data=f, file_name=export_path)
+        os.remove(export_path)
         os.remove(export_path)
