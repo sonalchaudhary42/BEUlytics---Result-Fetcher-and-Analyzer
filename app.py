@@ -125,7 +125,7 @@ with st.form("result_form"):
         "cgpa": "Sort by CGPA (High to Low)",
         "semester": "Sort by Latest Semester Grade"
     }[x])
-    export_format = st.selectbox("Export Format", options=["csv", "xlsx", "txt", "pdf"], format_func=lambda x: x.upper())
+    export_format = st.selectbox("Export Format", options=["pdf", "txt", "csv", "xlsx"], format_func=lambda x: x.upper())
     submitted = st.form_submit_button("Fetch Results")
 
 if submitted:
@@ -233,3 +233,4 @@ if submitted:
                 unsafe_allow_html=True
             )
         os.remove(export_path)
+
