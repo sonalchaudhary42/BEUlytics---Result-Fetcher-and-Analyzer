@@ -185,17 +185,8 @@ if submitted:
         df["Sem Cur. CGPA"] = pd.to_numeric(df["Sem Cur. CGPA"], errors='coerce')
         df = df.sort_values(by="Sem Cur. CGPA", ascending=False)
     elif view_mode == "semester":
-        sem_cols = [c for c in df.columns if c.startswith("Sem ")]
-        def latest_sem_grade(row):
-            for col in reversed(sem_cols):
-                try:
-                    val = float(row[col])
-                    return val
-                except:
-                    continue
-            return -1
-        df["Latest Semester Grade"] = df.apply(latest_sem_grade, axis=1)
-        df = df.sort_values(by="Latest Semester Grade", ascending=False).drop(columns=["Latest Semester Grade"])
+        df["Current SGPA"] = pd.to_numeric(df["Current SGPA"], errors="coerce")
+        df = df.sort_values(by="Current SGPA", ascending=False)
 
     st.success("Results fetched successfully!")
     st.dataframe(df)
