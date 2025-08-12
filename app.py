@@ -17,22 +17,13 @@ branch_codes = {
 }
 
 college_codes = {
-    "102": "Vidya Vihar Institute of Technology, Purnia",
-    "103": "Netaji Subhash Institute of Technology, Patna",
-    "106": "Sityog Institute of Technology, Aurangabad",
-    "107": "Muzaffarpur Institute of Technology, Muzaffarpur",
-    "108": "Bhagalpur College of Engineering, Bhagalpur",
-    "109": "Nalanda College of Engineering, Nalanda",
     "110": "Gaya College of Engineering, Gaya",
+    "108": "Bhagalpur College of Engineering, Bhagalpur",
+    "107": "Muzaffarpur Institute of Technology, Muzaffarpur",
+    "109": "Nalanda College of Engineering, Nalanda",
     "111": "Darbhanga College of Engineering, Darbhanga",
     "113": "Motihari College Of Engineering, Mothihari",
-    "115": "Azmet Institute of Technology, Kishanganj",
     "117": "Lok Nayak Jai Prakash Institute of Technology, Chhapra",
-    "118": "Buddha Institute of Technology, Gaya",
-    "119": "Adwaita Mission Institute of Technology, Banka",
-    "121": "Moti Babu Institute of Technology, Forbesganj",
-    "122": "Exalt College of Engineering & Technology, Vaishali",
-    "123": "Siwan Engineering & Technical Institute, Siwan",
     "124": "Sershah Engineering College, Sasaram, Rohtas",
     "125": "Rashtrakavi Ramdhari Singh Dinkar College of Engineering, Begusarai",
     "126": "Bakhtiyarpur College of Engineering, Patna",
@@ -45,9 +36,6 @@ college_codes = {
     "133": "Government Engineering College, Jamui",
     "134": "Government Engineering College, Banka",
     "135": "Government Engineering College, Vaishali",
-    "136": "Mother's Institute of Technology, Bihta, Patna",
-    "139": "R.P. Sharma Institute of Technology, Patna",
-    "140": "Maulana Azad College of Engineering & Technology, Patna",
     "141": "Government Engineering College, Nawada",
     "142": "Government Engineering College, Kishanganj",
     "144": "Government Engineering College, Munger",
@@ -66,7 +54,19 @@ college_codes = {
     "157": "Government Engineering College, Sheikhpura",
     "158": "Government Engineering College, Lakhisarai",
     "159": "Government Engineering College, Samastipur",
-    "165": "Shri Phanishwar Nath Renu Engineering College, Araria"
+    "165": "Shri Phanishwar Nath Renu Engineering College, Araria",
+    "102": "Vidya Vihar Institute of Technology, Purnia",
+    "103": "Netaji Subhash Institute of Technology, Patna",
+    "106": "Sityog Institute of Technology, Aurangabad",
+    "115": "Azmet Institute of Technology, Kishanganj",
+    "118": "Buddha Institute of Technology, Gaya",
+    "119": "Adwaita Mission Institute of Technology, Banka",
+    "121": "Moti Babu Institute of Technology, Forbesganj",
+    "122": "Exalt College of Engineering & Technology, Vaishali",
+    "123": "Siwan Engineering & Technical Institute, Siwan",
+    "136": "Mother's Institute of Technology, Bihta, Patna",
+    "139": "R.P. Sharma Institute of Technology, Patna",
+    "140": "Maulana Azad College of Engineering & Technology, Patna"
 }
 
 # Semester mappings
@@ -119,7 +119,7 @@ with st.form("result_form"):
     college = st.selectbox("College", options=list(college_codes.keys()), format_func=lambda x: college_codes[x])
     start_reg = st.number_input("Start Registration No. (Short Reg No.)", min_value=1, max_value=999, value=1)
     end_reg = st.number_input("End Registration No. (Short Reg No.)", min_value=1, max_value=999, value=10)
-    is_lateral = st.selectbox("Is this for Lateral Entry Students?", options=list(lateral.keys()))
+    is_lateral = st.selectbox("Are You Want to Combine LE Student Results also?", options=list(lateral.keys()))
     view_mode = st.selectbox("View Mode", options=["regno", "cgpa", "semester"], format_func=lambda x: {
         "regno": "Registration No. wise",
         "cgpa": "Sort by CGPA (High to Low)",
@@ -134,13 +134,6 @@ if submitted:
         st.error("Start Registration No. cannot be greater than End Registration No.")
         st.stop()
 
-    if lateral[is_lateral]:
-        if semester < 3:
-            st.error("Lateral Entry students' results are available only from Semester 3 onwards.")
-            st.stop()
-        reg_batch += 1
-        start_reg += 900
-        end_reg += 900
 
     st.info("Fetching results... This might take some time depending on the range.")
     year = int(2000 + batch + (0.5 * semester))
@@ -166,10 +159,18 @@ if submitted:
         # st.success("Primary URL test successful! Fetching all results with this format.")
         # If the test passes, use the primary URL for the full range.
         results = fetch_all_results(url_primary, int(start_full_reg_no), int(end_full_reg_no))
+        if semester > 2 and lateral[is_lateral]:
+            le_start_full_reg_no = f"{reg_batch+1}{branch}{college}901"
+            le_end_full_reg_no = f"{reg_batch+1}{branch}{college}930"
+            le_results = fetch_all_results(url_primary, int(le_start_full_reg_no), int(le_end_full_reg_no))
     else:
         # st.warning("Primary URL test failed. Switching to secondary URL for all results.")
         # If the test fails, use the secondary URL for the full range directly.
         results = fetch_all_results(url_secondary, int(start_full_reg_no), int(end_full_reg_no))
+        if semester > 2:
+            le_start_full_reg_no = f"{reg_batch+1}{branch}{college}901"
+            le_end_full_reg_no = f"{reg_batch+1}{branch}{college}930"
+            le_results = fetch_all_results(url_secondary, int(le_start_full_reg_no), int(le_end_full_reg_no))
         
     # ---- END: NEW OPTIMIZED LOGIC ----
 
@@ -179,6 +180,9 @@ if submitted:
         st.stop()
 
     df = pd.DataFrame(results)
+    if semester > 2:
+        le_df = pd.DataFrame(le_results)
+        df = pd.concat([df, le_df], ignore_index=True)
 
     # Sort data if required
     if view_mode == "cgpa":
@@ -219,5 +223,13 @@ if submitted:
         export_to_pdf(df, export_path)
         with open(export_path, "rb") as f:
             st.download_button(label="Download PDF", data=f, file_name=export_path)
-        os.remove(export_path)
+            st.markdown("---")
+            st.markdown(
+                "<div style='text-align: center; color: grey;'>"
+                "Made with ❤️ by <b>Aditya Kumar</b><br>"
+                "Department of Computer Science & Engineering<br>"
+                "Gaya College of Engineering (GCE), under BEU Patna"
+                "</div>",
+                unsafe_allow_html=True
+            )
         os.remove(export_path)
