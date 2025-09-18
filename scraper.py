@@ -5,7 +5,7 @@ from concurrent.futures import ThreadPoolExecutor
 import pandas as pd
 
 
-def fetch_and_parse_result(base_url, registration_no, retries=10, backoff_factor=1):
+def fetch_and_parse_result(base_url, registration_no, retries=3, backoff_factor=1):
     url = f"{base_url}{registration_no}"
     for attempt in range(retries):
         try:
@@ -38,7 +38,7 @@ def fetch_and_parse_result(base_url, registration_no, retries=10, backoff_factor
 
 def fetch_all_results(base_url, start_reg, end_reg):
     results = []
-    with ThreadPoolExecutor(max_workers=8) as executor:
+    with ThreadPoolExecutor(max_workers=5) as executor:
         futures = [executor.submit(fetch_and_parse_result, base_url, reg_no) for reg_no in
                    range(start_reg, end_reg + 1)]
         for future in futures:
@@ -68,6 +68,7 @@ def sort_by_latest_semester_grade(df):
     df["Latest Semester Grade"] = df.apply(get_latest_grade, axis=1)
     sorted_df = df.sort_values(by="Latest Semester Grade", ascending=False).drop(columns=["Latest Semester Grade"])
     return sorted_df
+
 
 
 
