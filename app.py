@@ -12,6 +12,7 @@ os.chdir(os.path.dirname(os.path.abspath(__file__)))
 branch_codes = {
     "101": "Civil Engineering (CE)",
     "102": "Mechanical Engineering (ME)",
+    "103": "Electrical Engineering(EE)",
     "105": "Computer Science Engineering (CSE)",
     "110": "Electrical and Electronics Engineering (EEE)"
 }
@@ -233,4 +234,5 @@ if submitted:
                 unsafe_allow_html=True
             )
         os.remove(export_path)
+
 
