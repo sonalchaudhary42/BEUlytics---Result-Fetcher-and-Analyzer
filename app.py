@@ -15,6 +15,9 @@ branch_codes = {
     "103": "Electrical Engineering(EE)",
     "105": "Computer Science Engineering (CSE)",
     "110": "Electrical and Electronics Engineering (EEE)",
+    "151": "CSE(AI)",
+    "152": "CSE(Cybersecurity)",
+    "153": "CSE(DS)",
     "155": "CSE(IoT)"
 }
 
@@ -235,5 +238,6 @@ if submitted:
                 unsafe_allow_html=True
             )
         os.remove(export_path)
+
 
 
