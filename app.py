@@ -14,7 +14,8 @@ branch_codes = {
     "102": "Mechanical Engineering (ME)",
     "103": "Electrical Engineering(EE)",
     "105": "Computer Science Engineering (CSE)",
-    "110": "Electrical and Electronics Engineering (EEE)"
+    "110": "Electrical and Electronics Engineering (EEE)",
+    "155": "CSE(IoT)"
 }
 
 college_codes = {
